@@ -17,7 +17,7 @@ class MainSchedulerConfig {
              .build()
          invoiceBillingJob.jobDataMap["billingService"] = billingService
          val triggerInvoiceBilling: Trigger = TriggerBuilder.newTrigger()
-             .withSchedule(CronScheduleBuilder.cronSchedule("* * * ? * *"))
+             .withSchedule(CronScheduleBuilder.cronSchedule("0 0 10 1 * ?"))
              .build()
          val invoiceScheduler: Scheduler = StdSchedulerFactory().scheduler
          invoiceScheduler.start()

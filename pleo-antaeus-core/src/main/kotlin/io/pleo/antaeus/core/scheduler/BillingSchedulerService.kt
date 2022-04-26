@@ -15,7 +15,6 @@ class BillingSchedulerService : Job {
         try {
            val billingServiceSchedule = context.jobDetail.jobDataMap["billingService"] as BillingService
             billingServiceSchedule.billPendingInvoice()
-            logger.info(billingServiceSchedule.billPendingInvoice().toString())
         } catch (e: JobExecutionException) {
             logger.error { e }
         }
