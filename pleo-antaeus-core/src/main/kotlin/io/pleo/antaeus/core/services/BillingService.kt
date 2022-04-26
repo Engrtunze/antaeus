@@ -6,12 +6,13 @@ import io.pleo.antaeus.core.exceptions.InvoiceNotFoundException
 import io.pleo.antaeus.core.exceptions.NetworkException
 import io.pleo.antaeus.core.external.PaymentProvider
 import io.pleo.antaeus.models.Invoice
+import io.pleo.antaeus.models.InvoiceStatus
 import mu.KotlinLogging
 import java.lang.Thread.sleep
 
 class BillingService(private val paymentProvider: PaymentProvider, private val invoiceService: InvoiceService) {
     private val logger = KotlinLogging.logger {}
-    private val numberOfTrial  = 4
+    private val numberOfTrial  = 3
 
     fun billPendingInvoice(){
         invoiceService.fetchAllPendingInvoice().forEach{ invoice -> billInvoices(invoice) }
@@ -19,14 +20,17 @@ class BillingService(private val paymentProvider: PaymentProvider, private val i
 
     private fun billInvoices (invoice : Invoice, failedTrials : Int = numberOfTrial)
     {
-        var paymentProviderResponse = false
 
         try {
-            paymentProviderResponse = paymentProvider.charge(invoice)
+
+            if (paymentProvider.charge(invoice))
+            {
+                invoiceService.updateInvoiceStatus(invoice, InvoiceStatus.PAID )
+            }
 
         }catch (e : Exception){
             when(e){
-                is CurrencyMismatchException, is CustomerNotFoundException, is InvoiceNotFoundException ->{
+                is CurrencyMismatchException, is CustomerNotFoundException ->{
                     logger.error ( "billing invoice failed due to: ", e)
                 }
                 is NetworkException -> {
