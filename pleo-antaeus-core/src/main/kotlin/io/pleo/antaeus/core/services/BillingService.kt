@@ -2,7 +2,6 @@ package io.pleo.antaeus.core.services
 
 import io.pleo.antaeus.core.exceptions.CurrencyMismatchException
 import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
-import io.pleo.antaeus.core.exceptions.InvoiceNotFoundException
 import io.pleo.antaeus.core.exceptions.NetworkException
 import io.pleo.antaeus.core.external.PaymentProvider
 import io.pleo.antaeus.models.Invoice
@@ -12,7 +11,7 @@ import java.lang.Thread.sleep
 
 class BillingService(private val paymentProvider: PaymentProvider, private val invoiceService: InvoiceService) {
     private val logger = KotlinLogging.logger {}
-    private val numberOfTrial  = 3
+    private val numberOfTrial  = 2
 
     fun billPendingInvoice(){
         invoiceService.fetchAllPendingInvoice().forEach{ invoice -> billInvoices(invoice) }

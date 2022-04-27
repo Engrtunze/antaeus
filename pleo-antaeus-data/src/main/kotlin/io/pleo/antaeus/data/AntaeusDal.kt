@@ -43,10 +43,8 @@ class AntaeusDal(private val db: Database) {
         return transaction(db) {
             InvoiceTable
                 .update({InvoiceTable.id eq invoice.id}){
-                    it[this.value] =invoice.amount.value
-                    it[this.currency] =invoice.amount.currency.toString()
                     it[this.status] =invoice.status.toString()
-                    it[this.customerId] =invoice.customerId                }
+                }
         }
     }
 
