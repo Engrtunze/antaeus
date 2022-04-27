@@ -15,6 +15,7 @@ class BillingSchedulerService : Job {
         try {
             val billingServiceSchedule = context.jobDetail.jobDataMap["billingService"] as BillingService
             billingServiceSchedule.billPendingInvoice()
+
         } catch (e: JobExecutionException) {
             logger.error("Billing scheduler failed due to: ", e)
         }
