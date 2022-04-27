@@ -12,6 +12,6 @@ internal fun creatInvoice(invoiceStatus: InvoiceStatus): Invoice {
     return Invoice(id = Random.nextInt(), customerId = Random.nextInt(), status = invoiceStatus, amount = createMoney())
 }
 
-internal fun createMoney():Money{
+internal fun createMoney(): Money {
     return Money(value = BigDecimal(Random.nextDouble(10.0, 200.0)), currency = Currency.values()[Random.nextInt(4)])
 }

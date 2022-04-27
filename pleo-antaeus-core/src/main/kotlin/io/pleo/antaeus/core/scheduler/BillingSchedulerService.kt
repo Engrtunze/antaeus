@@ -13,10 +13,10 @@ class BillingSchedulerService : Job {
     override fun execute(context: JobExecutionContext) {
 
         try {
-           val billingServiceSchedule = context.jobDetail.jobDataMap["billingService"] as BillingService
+            val billingServiceSchedule = context.jobDetail.jobDataMap["billingService"] as BillingService
             billingServiceSchedule.billPendingInvoice()
         } catch (e: JobExecutionException) {
-            logger.error { e }
+            logger.error("Billing scheduler failed due to: ", e)
         }
 
 
