@@ -5,9 +5,10 @@
 package io.pleo.antaeus.rest
 
 import io.javalin.Javalin
-import io.javalin.apibuilder.ApiBuilder.get
-import io.javalin.apibuilder.ApiBuilder.path
+import io.javalin.apibuilder.ApiBuilder.*
+import io.pleo.antaeus.core.exceptions.EntityAlreadyBilledException
 import io.pleo.antaeus.core.exceptions.EntityNotFoundException
+import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
 import mu.KotlinLogging
@@ -17,7 +18,8 @@ private val thisFile: () -> Unit = {}
 
 class AntaeusRest(
     private val invoiceService: InvoiceService,
-    private val customerService: CustomerService
+    private val customerService: CustomerService,
+    private val billingService: BillingService
 ) : Runnable {
 
     override fun run() {
@@ -32,8 +34,15 @@ class AntaeusRest(
             exception(EntityNotFoundException::class.java) { _, ctx ->
                 ctx.status(404)
             }
+            //InvoiceAlreadyBilledException: return 200 HTTP status code
+            exception(EntityAlreadyBilledException::class.java) { e, ctx ->
+                ctx.status(422)
+                ctx.json(e.localizedMessage)
+            }
             // Unexpected exception: return HTTP 500
-            exception(Exception::class.java) { e, _ ->
+            exception(Exception::class.java) { e, ctx ->
+                ctx.status(500)
+                ctx.json(e.localizedMessage)
                 logger.error(e) { "Internal server error" }
             }
             // On 404: return message
@@ -78,6 +87,14 @@ class AntaeusRest(
                             it.json(customerService.fetch(it.pathParam("id").toInt()))
                         }
                     }
+
+                    path("charge_invoice"){
+                        //URL: /rest/v1/charge_invoice/{:id}
+                        post(":id"){
+                            it.json(billingService.billSingleInvoice(it.pathParam("id").toInt()))
+                        }
+                    }
+
                 }
             }
         }

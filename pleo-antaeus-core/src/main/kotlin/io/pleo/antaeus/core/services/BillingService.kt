@@ -1,8 +1,6 @@
 package io.pleo.antaeus.core.services
 
-import io.pleo.antaeus.core.exceptions.CurrencyMismatchException
-import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
-import io.pleo.antaeus.core.exceptions.NetworkException
+import io.pleo.antaeus.core.exceptions.*
 import io.pleo.antaeus.core.external.PaymentProvider
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
@@ -13,8 +11,27 @@ class BillingService(private val paymentProvider: PaymentProvider, private val i
     private val logger = KotlinLogging.logger {}
     private val numberOfTrial = 2
 
-    fun billPendingInvoice() {
-        invoiceService.fetchAllPendingInvoice().forEach { invoice -> billInvoices(invoice) }
+    fun billPendingInvoices() {
+        invoiceService.fetchAllPendingInvoice().forEach { invoice ->
+            try {
+                billInvoices(invoice)
+            } catch (e: Exception) {
+                logger.info { "failed to process invoice {}" }
+            }
+
+        }
+    }
+
+    fun billSingleInvoice(id: Int): Invoice {
+        val invoice = invoiceService.fetch(id)
+        if (invoice.status == InvoiceStatus.PENDING) {
+            billInvoices(invoice)
+        } else {
+            throw InvoiceAlreadyBilledException(id)
+        }
+
+        return invoiceService.fetch(id)
+
     }
 
     private fun billInvoices(invoice: Invoice, failedTrials: Int = numberOfTrial) {
@@ -23,6 +40,8 @@ class BillingService(private val paymentProvider: PaymentProvider, private val i
 
             if (paymentProvider.charge(invoice)) {
                 invoiceService.updateInvoiceStatus(invoice, InvoiceStatus.PAID)
+            } else {
+                throw PaymentProviderFailureException(invoice.id)
             }
 
         } catch (e: Exception) {
@@ -40,8 +59,7 @@ class BillingService(private val paymentProvider: PaymentProvider, private val i
                 else -> logger.error("Something went wrong please try again later: ", e)
 
             }
-
-
+            throw  e
         }
 
     }

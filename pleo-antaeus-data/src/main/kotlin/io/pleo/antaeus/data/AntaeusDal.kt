@@ -31,6 +31,7 @@ class AntaeusDal(private val db: Database) {
         }
     }
 
+
     fun fetchAllPendingInvoice(): List<Invoice> {
         return transaction(db) {
             InvoiceTable
@@ -47,6 +48,7 @@ class AntaeusDal(private val db: Database) {
                 }
         }
     }
+
 
     fun createInvoice(amount: Money, customer: Customer, status: InvoiceStatus = InvoiceStatus.PENDING): Invoice? {
         val id = transaction(db) {

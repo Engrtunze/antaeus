@@ -87,11 +87,33 @@ The code given is structured as follows. Feel free however to modify the structu
 
 Happy hacking 😁!
 
-### Development Documentation Ride 🤓
+### Development Documentation 🤓
+
+
+##Billing Service
+* billPendingInvoice function: This method fetches all pending invoice from the database in list then adds each of the pending invoice into the billService method to be charged.
+
+
+* billInvoices function: This calls the payment provider that will charge the invoice when the payment provider service response is true the pending invoices get charged <br> and get updated to paid using the invoice status enum class. <br> Also when charging the invoice some exceptions are caught which are important to the system such as network exception which I implemented a retry mechanism with 2 maximum numbers of retries and also after every 10secs.
+
+
+* billSingleInvoice function: This allows you to retry a single invoice, this way an admin can try to bill if something goes wrong with the scheduler or something.
+
+##Billing Service Suggestion
+- in a real world system, I won't fetch all pending invoices at once to process, I will fetch in batches so the system has enough resources to process and can recover quickly from failure.
+
+
+- The invoiceStatus enum class can also have failed status because if there are some exceptions are caught when charging the invoice it is better to update the invoice to failed in other to keep track of failed records and having a good monitoring system like bugsnag or sentry will help in monitoring our exceptions better.
+
+
+- This will lead us to create a fetchAllFailedInvoice method and then add it to the billInvoice method to charge maybe after 3 - 5 days of charging the pending request invoice to charge failed invoice.
+
 
 ##Billing Scheduler
 
 * BillingSchedulerService is an independent scheduler for billing which is initiated or initialized by the MainSchedulerConfig.
+
+
 * MainSchedulerConfig handles all scheduler service in the application but at this point we only have the BillingSchedulerService,
 this integration has :
   * Job – Represents the actual job to be executed
@@ -100,29 +122,41 @@ this integration has :
     Trigger – Triggers are the mechanism by which Jobs are scheduled
 
 ##Billing Scheduler Suggestion
-In most use cases, we would want to disallow the execution of more than one instances of the same job at the same time, to prevent race conditions on saved data. This might occur when the jobs take too long to finish or are triggered too often.
-
-In order to properly diagnose and trace issues in applications that use Quartz well Any code that gets executed inside jobs must be logged.Quartz has its own logs when an event occurs i.e. a scheduler gets created, a job gets executed etc.
-
-Scheduler monitor/manager like [QuartzDesk](https://www.quartzdesk.com/) is important when the application is deployed to live quartz scheduler GUI helps us manage and monitor Quartz schedulers, jobs and triggers in all types of Java applications.
+- In most use cases, we would want to disallow the execution of more than one instances of the same job at the same time, to prevent race conditions on saved data. This might occur when the jobs take too long to finish or are triggered too often.
 
 
-##Billing Service
-* billPendingInvoice method: This method fetches all pending invoice from the database in list then adds each of the pending invoice into the billService method to be charged.
-* billInvoices method: This calls the payment provider that will charge the invoice when the payment provider service response is true the pending invoices get charged <br> and get updated to paid using the invoice status enum class. <br> Also when charging the invoice some exceptions are caught which are important to the system such as network exception which I implemented a retry mechanism with 2 maximum numbers of retries and also after every 10secs. 
+- In order to properly diagnose and trace issues in applications that use Quartz well Any code that gets executed inside jobs must be logged.Quartz has its own logs when an event occurs i.e. a scheduler gets created, a job gets executed etc.
 
-##Billing Service Suggestion
-- The invoiceStatus enum class can also have failed status because if there are some exceptions are caught when charging the invoice it is better to update the invoice to failed in other to keep track of failed records and having a good monitoring system like bugsnag or sentry will help in monitoring our exceptions better.
-- This will lead us to create a fetchAllFailedInvoice method and then add it to the billInvoice method to charge maybe after 3 - 5 days of charging the pending request invoice to charge failed invoice.
 
+- Scheduler monitor/manager like [QuartzDesk](https://www.quartzdesk.com/) is important when the application is deployed to live quartz scheduler GUI helps us manage and monitor Quartz schedulers, jobs and triggers in all types of Java applications.
+
+##AntaeusDal / InvoiceService
+* fetchAllPendingInvoice - Fetches customer's with pending invoices
+
+
+* updateInvoiceStatus - Update's invoice status
+
+
+##General Improvements
+ * I am new to Kotlin, so I might not have written a correct kotlin code I believe I will get used to it with time if I am given the opportunity.
+
+
+ * Because of my availability I wasn't able to take the task at a straight timeline and how I am getting used to the kotlin environment especially the Javalin framework which made me work on the minimal and simple form of solution.
+
+
+ * Hardcoded some properties just to deliver the solution, as an improvement, these values will be externalised for easy change, just as the cron job and number of retries.
+
+
+ * I added a few unit tests, but no integration tests to confirm all the part of the system are working as expected.
 
 ##EXTRAS
+
 Additional Dependencies :-
 * Quartz scheduler dependencies - quartz scheduler for scheduling.
 * junit.jupiter dependencies - for running unit test.
 
-Additional Methods to Existing class <br>
+Additional Exceptions:-
+* Added PaymentProviderFailureException : This exception is thrown when an invoice is charged manually, and it returns false.
 
-  AntaeusDal and InvoiceService  class : <br> 
-* fetchAllPendingInvoice -> Fetches all pending invoices.
-* updateInvoiceStatus -> Updates invoice status.
+
+* Added InvoiceAlreadyBilledException : This exception is thrown when an invoice with paid status is being charged/billed again.
